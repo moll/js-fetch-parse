@@ -56,6 +56,8 @@ describe("FetchBody", function() {
     var err
     try { yield res } catch (ex) { err = ex }
     err.must.be.an.error(SyntaxError, "Unexpected end of input")
+    err.must.have.nonenumerable("response")
+    err.response.must.be.an.instanceof(Fetch.Response)
   })
 
   it("must set body if Content-Type is text/plain", function*() {

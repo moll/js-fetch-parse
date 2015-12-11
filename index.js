@@ -12,9 +12,12 @@ exports.fetch = function(fetch, url, opts) {
 
 exports.parse = function(res) {
   switch (isParseable(res) && typeOf(res.headers.get("content-type"))) {
-    case "json": return res.json().then(set.bind(null, res))
-    case "text": return res.text().then(set.bind(null, res))
-    default: return set(res, undefined)
+    case "json":
+      return res.json().then(setBody.bind(null, res), onError.bind(null, res))
+    case "text":
+      return res.text().then(setBody.bind(null, res))
+    default:
+      return setBody(res, undefined)
   }
 }
 
@@ -32,7 +35,7 @@ function typeOf(type) {
   return null
 }
 
-function set(res, body) {
+function setBody(res, body) {
   res.body = body
   return res
 }
@@ -40,6 +43,13 @@ function set(res, body) {
 function parseType(type) {
   try { return new MediaType(type) }
   catch (ex) { if (ex instanceof SyntaxError) return null; throw ex }
+}
+
+function onError(res, err) {
+  setBody(res, undefined)
+  throw Object.defineProperty(err, "response", {
+    value: res, configurable: true, writable: true
+  })
 }
 
 function assign(target, source) {
