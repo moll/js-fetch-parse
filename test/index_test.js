@@ -79,6 +79,14 @@ describe("FetchBody", function() {
     ;(yield res).body.must.eql({key: "value"})
   })
 
+  // Just in case protect against an erroneous 204, too.
+  it("must not set body when response 204", function*() {
+    var res = fetch(URL)
+    var headers = {"Content-Type": "application/json"}
+    this.requests[0].respond(204, headers, "")
+    yield res.must.then.have.property("body", undefined)
+  })
+
   // Facebook's API does that: return a Content-Type header, but no body with
   // its 304 Not Modified
   it("must not set body when response 304", function*() {

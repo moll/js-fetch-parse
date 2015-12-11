@@ -19,7 +19,7 @@ exports.parse = function(res) {
 }
 
 function isParseable(res) {
-  if (res.status === 304) return false
+  if (res.status === 204 || res.status === 304) return false
   var contentType = res.headers.get("content-type")
   return contentType != null && contentType !== ""
 }
