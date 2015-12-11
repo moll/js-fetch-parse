@@ -1,4 +1,4 @@
-## Unreleased
+## 0.1.338 (Dec 11, 2015)
 - Skips parsing when response 304 Not Modified.  
   This fixes fetching from servers that send a Content-Type along with 304.
 - Skips parsing when response 204 No Content.  
