@@ -11,15 +11,21 @@ exports.fetch = function(fetch, url, opts) {
 }
 
 exports.parse = function(res) {
-  switch (typeOf(res.headers.get("content-type"))) {
+  switch (isParseable(res) && typeOf(res.headers.get("content-type"))) {
     case "json": return res.json().then(set.bind(null, res))
     case "text": return res.text().then(set.bind(null, res))
     default: return set(res, undefined)
   }
 }
 
+function isParseable(res) {
+  if (res.status === 304) return false
+  var contentType = res.headers.get("content-type")
+  return contentType != null && contentType !== ""
+}
+
 function typeOf(type) {
-  type = type == null || type === "" ? null : parseType(type)
+  type = parseType(type)
   if (type == null) return null
   if (type.match(TEXT)) return "text"
   if (JSONS.some(type.match, type)) return "json"

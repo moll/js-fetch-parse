@@ -79,6 +79,15 @@ describe("FetchBody", function() {
     ;(yield res).body.must.eql({key: "value"})
   })
 
+  // Facebook's API does that: return a Content-Type header, but no body with
+  // its 304 Not Modified
+  it("must not set body when response 304", function*() {
+    var res = fetch(URL)
+    var headers = {"Content-Type": "application/json"}
+    this.requests[0].respond(304, headers, "")
+    yield res.must.then.have.property("body", undefined)
+  })
+
   it("must set body undefined if Content-Type unrecognized", function*() {
     var res = fetch(URL)
     var headers = {"Content-Type": "application/fancy"}
