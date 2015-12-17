@@ -20,9 +20,12 @@ exports.parse = function(types, res) {
 
   switch (matchesTypes(type, types) ? classifyType(type) : null) {
     case "json":
+      if (res.headers.get("content-length") === "0") return res
       return res.json().then(setBody.bind(null, res), onError.bind(null, res))
+
     case "text":
       return res.text().then(setBody.bind(null, res))
+
     default:
       return res
   }

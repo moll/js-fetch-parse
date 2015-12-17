@@ -5,6 +5,7 @@
 - Allows passing in an array of media types to be read and possibly parsed.  
   Only JSON is actually parsed. The rest are read to `res.body`.
 - Reads `text/javascript` as regular text, not JSON.
+- Prevents JSON parse errors if `Content-Length` is `0` by not parsing then.
 
 ## 0.1.338 (Dec 11, 2015)
 - Skips parsing when response 304 Not Modified.  
