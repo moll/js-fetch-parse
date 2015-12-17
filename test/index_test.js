@@ -16,6 +16,52 @@ describe("FetchBody", function() {
     fetch.Response.must.equal(Fetch.Response)
   })
 
+  it("must parse both text/* and JSON by default", function*() {
+    var res, headers
+
+    res = fetch(URL)
+    headers = {"Content-Type": "text/plain"}
+    this.requests.pop().respond(200, headers, "Hello")
+    ;(yield res).body.must.equal("Hello")
+
+    res = fetch(URL)
+    headers = {"Content-Type": "text/html"}
+    this.requests.pop().respond(200, headers, "<html>")
+    ;(yield res).body.must.equal("<html>")
+
+    res = fetch(URL)
+    headers = {"Content-Type": "application/json"}
+    this.requests.pop().respond(200, headers, JSON.stringify({key: "value"}))
+    ;(yield res).body.must.eql({key: "value"})
+  })
+
+  it("must set body if type given exactly", function*() {
+    var fetch = FetchBody(Fetch, ["text/markdown"])
+    var res = fetch("/")
+    var headers = {"Content-Type": "text/markdown"}
+    this.requests[0].respond(200, headers, "# Hello")
+    yield res.must.then.have.property("body", "# Hello")
+  })
+
+  it("must set body if type given with wildcard", function*() {
+    var fetch = FetchBody(Fetch, ["text/*"])
+    var res = fetch("/")
+    var headers = {"Content-Type": "text/markdown"}
+    this.requests[0].respond(200, headers, "# Hello")
+    yield res.must.then.have.property("body", "# Hello")
+  })
+
+  it("must not set body if type not given", function*() {
+    var fetch = FetchBody(Fetch, ["text/plain"])
+    var res = fetch("/")
+    var headers = {"Content-Type": "text/markdown"}
+    this.requests[0].respond(200, headers, "Hello")
+
+    res = yield res
+    res.must.not.have.property("body")
+    yield res.text().must.then.equal("Hello")
+  })
+
   // Just in case protect against an erroneous 204, too.
   it("must not set body when response 204", function*() {
     var res = fetch(URL)
@@ -82,7 +128,71 @@ describe("FetchBody", function() {
     res.body.must.eql({key: "value"})
   })
 
-  describe("given JSON Content-Type", function() {
+  describe("when Content-Type is text", function() {
+    it("must set body given \"text/plain\"", function*() {
+      var fetch = FetchBody(Fetch, ["text/plain"])
+      var res = fetch("/")
+      var headers = {"Content-Type": "text/plain"}
+      this.requests[0].respond(200, headers, "Hello")
+      ;(yield res).body.must.equal("Hello")
+    })
+
+    it("must set body if Content-Type is text/plain", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "text/plain"}
+      this.requests[0].respond(200, headers, "Hello")
+      ;(yield res).body.must.equal("Hello")
+    })
+
+    it("must set body if Content-Type is text/plain", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "text/plain"}
+      this.requests[0].respond(200, headers, "Hello")
+      ;(yield res).body.must.equal("Hello")
+    })
+
+    it("must set body if Content-Type is text/plain; charset=utf-8",
+      function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "text/plain; charset=utf-8"}
+      this.requests[0].respond(200, headers, "Hello")
+      ;(yield res).body.must.equal("Hello")
+    })
+
+    it("must set body when Content-Type is text/javascript", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "text/javascript"}
+      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+      ;(yield res).body.must.equal(JSON.stringify({key: "value"}))
+    })
+
+    it("must set body when response not OK", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "text/plain"}
+      this.requests[0].respond(401, headers, "Hello")
+      ;(yield res).body.must.equal("Hello")
+    })
+  })
+
+  describe("when Content-Type is JSON", function() {
+    it("must parse JSON given \"json\"", function*() {
+      var fetch = FetchBody(Fetch, ["json"])
+
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/json"}
+      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+      ;(yield res).body.must.eql({key: "value"})
+    })
+
+    it("must parse JSON given \"application/json\"", function*() {
+      var fetch = FetchBody(Fetch, ["application/json"])
+
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/json"}
+      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+      ;(yield res).body.must.eql({key: "value"})
+    })
+
     it("must parse when Content-Type is application/json", function*() {
       var res = fetch(URL)
       var headers = {"Content-Type": "application/json"}
@@ -113,13 +223,6 @@ describe("FetchBody", function() {
       ;(yield res).body.must.eql({key: "value"})
     })
 
-    it("must parse when Content-Type is text/javascript", function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "text/javascript"}
-      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-      ;(yield res).body.must.eql({key: "value"})
-    })
-
     it("must parse when response not OK", function*() {
       var res = fetch(URL)
       var headers = {"Content-Type": "application/json"}
@@ -128,6 +231,16 @@ describe("FetchBody", function() {
       res = yield res
       res.status.must.equal(401)
       res.body.must.eql({key: "value"})
+    })
+
+    it("must not parse JSON if not asked", function*() {
+      var fetch = FetchBody(Fetch, ["text/plain"])
+      var res = fetch("/")
+      var headers = {"Content-Type": "application/json"}
+      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+      res = yield res
+      res.must.not.have.property("body")
+      yield res.text().must.then.equal(JSON.stringify({key: "value"}))
     })
 
     // This was a released bug with Remote that I noticed on Nov 25, 2014 and
@@ -143,30 +256,6 @@ describe("FetchBody", function() {
       err.must.be.an.error(SyntaxError, "Unexpected end of input")
       err.must.have.nonenumerable("response")
       err.response.must.be.an.instanceof(Fetch.Response)
-    })
-  })
-
-  describe("given text Content-Type", function() {
-    it("must set body if Content-Type is text/plain", function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "text/plain"}
-      this.requests[0].respond(200, headers, "Hello")
-      ;(yield res).body.must.equal("Hello")
-    })
-
-    it("must set body if Content-Type is text/plain; charset=utf-8",
-      function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "text/plain; charset=utf-8"}
-      this.requests[0].respond(200, headers, "Hello")
-      ;(yield res).body.must.equal("Hello")
-    })
-
-    it("must set body when response not OK", function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "text/plain"}
-      this.requests[0].respond(401, headers, "Hello")
-      ;(yield res).body.must.equal("Hello")
     })
   })
 })

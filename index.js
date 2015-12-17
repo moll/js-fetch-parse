@@ -1,17 +1,24 @@
 var MediaType = require("medium-type")
-var TEXT = new MediaType("text/plain")
-var JSONS = ["application/json", "text/javascript", "*/*+json"].map(MediaType)
+var concat = Array.prototype.concat.bind(Array.prototype)
+var TEXT = new MediaType("text/*")
+var JSONS = ["application/json", "*/*+json"].map(MediaType)
+var ALL = concat(TEXT, JSONS)
 
-exports = module.exports = function(fetch) {
-  return assign(exports.fetch.bind(null, fetch), fetch)
+exports = module.exports = function(fetch, types) {
+  types = types == null ? ALL : normalizeTypes(types)
+  return assign(exports.fetch.bind(null, fetch, types), fetch)
 }
 
-exports.fetch = function(fetch, url, opts) {
-  return fetch(url, opts).then(exports.parse)
+exports.fetch = function(fetch, types, url, opts) {
+  return fetch(url, opts).then(exports.parse.bind(null, types))
 }
 
-exports.parse = function(res) {
-  switch (isParseable(res) && typeOf(res.headers.get("content-type"))) {
+exports.parse = function(types, res) {
+  if (!hasContent(res)) return res
+  var type = parseType(res.headers.get("content-type"))
+  if (type == null) return res
+
+  switch (matchesTypes(type, types) ? classifyType(type) : null) {
     case "json":
       return res.json().then(setBody.bind(null, res), onError.bind(null, res))
     case "text":
@@ -21,29 +28,27 @@ exports.parse = function(res) {
   }
 }
 
-function isParseable(res) {
+function hasContent(res) {
   if (res.bodyUsed) return false
   if (res.status === 204 || res.status === 304) return false
   var contentType = res.headers.get("content-type")
   return contentType != null && contentType !== ""
 }
 
-function typeOf(type) {
-  type = parseType(type)
-  if (type == null) return null
-  if (type.match(TEXT)) return "text"
+function matchesTypes(type, types) {
+  for (var i = 0; i < types.length; ++i) if (type.match(types[i])) return true
+  return false
+}
+
+function classifyType(type) {
+  if (type.type === "text") return "text"
   if (JSONS.some(type.match, type)) return "json"
-  return null
+  return "text"
 }
 
 function setBody(res, body) {
   res.body = body
   return res
-}
-
-function parseType(type) {
-  try { return new MediaType(type) }
-  catch (ex) { if (ex instanceof SyntaxError) return null; throw ex }
 }
 
 function onError(res, err) {
@@ -53,7 +58,21 @@ function onError(res, err) {
   })
 }
 
-function assign(target, source) {
-  for (var key in source) target[key] = source[key]
-  return target
+function normalizeType(type) {
+  switch (type) {
+    case "json": return JSONS
+    default: return type instanceof MediaType ? type : new MediaType(type)
+  }
 }
+
+function parseType(type) {
+  try { return new MediaType(type) }
+  catch (ex) {
+    if (ex instanceof SyntaxError || ex instanceof TypeError) return null
+    else throw ex
+  }
+}
+
+function assign(a, b) { for (var k in b) a[k] = b[k]; return a }
+function normalizeTypes(types) { return flatten(types.map(normalizeType)) }
+function flatten(array) { return concat.apply(null, array) }
