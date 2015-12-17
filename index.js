@@ -19,15 +19,9 @@ exports.parse = function(types, res) {
   if (type == null) return res
 
   switch (matchesTypes(type, types) ? classifyType(type) : null) {
-    case "json":
-      if (res.headers.get("content-length") === "0") return res
-      return res.json().then(setBody.bind(null, res), onError.bind(null, res))
-
-    case "text":
-      return res.text().then(setBody.bind(null, res))
-
-    default:
-      return res
+    case "json": return res.text().then(parseJson.bind(null, res))
+    case "text": return res.text().then(setBody.bind(null, res))
+    default: return res
   }
 }
 
@@ -54,9 +48,14 @@ function setBody(res, body) {
   return res
 }
 
-function onError(res, err) {
-  setBody(res, undefined)
-  throw Object.defineProperty(err, "response", {
+function parseJson(res, body) {
+  if (body !== "") try { return setBody(res, JSON.parse(body)) }
+  catch (ex) { setBody(res, body); throw errorify(res, ex) }
+  else return setBody(res, undefined)
+}
+
+function errorify(res, err) {
+  return Object.defineProperty(err, "response", {
     value: res, configurable: true, writable: true
   })
 }

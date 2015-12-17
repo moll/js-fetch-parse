@@ -252,14 +252,25 @@ describe("FetchBody", function() {
 
     // Some implementations respond to HEAD requests with a Content-Type, but
     // Content-Lenght of 0. This saves throwing a parse error.
-    it("must not set body if Content-Length 0", function*() {
+    it("must set body to undefined if Content-Length 0", function*() {
       var res = fetch(URL, {method: "HEAD"})
       var headers = {"Content-Type": "application/json", "Content-Length": "0"}
       this.requests[0].respond(200, headers, "")
 
       res = yield res
-      res.must.not.have.property("body")
-      yield res.text().must.then.equal("")
+      res.must.have.property("body", undefined)
+      res.bodyUsed.must.be.true()
+    })
+
+    it("must set body to undefined if Content-Length, but no content",
+      function*() {
+      var res = fetch(URL, {method: "HEAD"})
+      var headers = {"Content-Type": "application/json", "Content-Length": "13"}
+      this.requests[0].respond(200, headers, "")
+
+      res = yield res
+      res.must.have.property("body", undefined)
+      res.bodyUsed.must.be.true()
     })
 
     // This was a released bug with Remote that I noticed on Nov 25, 2014 and
@@ -275,7 +286,7 @@ describe("FetchBody", function() {
       err.must.be.an.error(SyntaxError, "Unexpected end of input")
       err.must.have.nonenumerable("response")
       err.response.must.be.an.instanceof(Fetch.Response)
-      err.response.must.have.property("body", undefined)
+      err.response.must.have.property("body", "{\"foo\": ")
     })
   })
 })
