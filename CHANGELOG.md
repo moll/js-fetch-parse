@@ -1,4 +1,4 @@
-## Unreleased
+## 0.2.0 (Dec 17, 2015)
 - Skips parsing again if body already used (`res.bodyUsed`).  
   This also means `body` _won't be_ set `undefined` in cases where the
   Content-Type is not recognized.
