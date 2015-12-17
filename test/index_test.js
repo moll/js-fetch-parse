@@ -16,78 +16,15 @@ describe("FetchBody", function() {
     fetch.Response.must.equal(Fetch.Response)
   })
 
-  it("must set body when Content-Type is application/json", function*() {
-    var res = fetch(URL)
-    var headers = {"Content-Type": "application/json"}
-    this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-    ;(yield res).body.must.eql({key: "value"})
-  })
-
-  it("must set body when Content-Type is application/json; charset=utf-8",
-    function*() {
-    var res = fetch(URL)
-    var headers = {"Content-Type": "application/json; charset=utf-8"}
-    this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-    ;(yield res).body.must.eql({key: "value"})
-  })
-
-  it("must set body when Content-Type is application/vnd.foo+json",
-    function*() {
-    var res = fetch(URL)
-    var headers = {"Content-Type": "application/vnd.foo+json"}
-    this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-    ;(yield res).body.must.eql({key: "value"})
-  })
-
-  it("must set body when Content-Type is text/javascript", function*() {
-    var res = fetch(URL)
-    var headers = {"Content-Type": "text/javascript"}
-    this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-    ;(yield res).body.must.eql({key: "value"})
-  })
-
-  // This was a released bug with Remote that I noticed on Nov 25, 2014 and was
-  // related to parsing errors not being caught and passed to the response
-  // error handler. Nor its related promise.
-  it("must reject with SyntaxError given invalid JSON", function*() {
-    var res = fetch(URL)
-    var headers = {"Content-Type": "application/json"}
-    this.requests[0].respond(200, headers, "{\"foo\": ")
-
-    var err
-    try { yield res } catch (ex) { err = ex }
-    err.must.be.an.error(SyntaxError, "Unexpected end of input")
-    err.must.have.nonenumerable("response")
-    err.response.must.be.an.instanceof(Fetch.Response)
-  })
-
-  it("must set body if Content-Type is text/plain", function*() {
-    var res = fetch(URL)
-    var headers = {"Content-Type": "text/plain"}
-    this.requests[0].respond(200, headers, "Hello")
-    ;(yield res).body.must.equal("Hello")
-  })
-
-  it("must set body if Content-Type is text/plain; charset=utf-8", function*() {
-    var res = fetch(URL)
-    var headers = {"Content-Type": "text/plain; charset=utf-8"}
-    this.requests[0].respond(200, headers, "Hello")
-    ;(yield res).body.must.equal("Hello")
-  })
-
-  it("must set body when response not OK", function*() {
-    var res = fetch(URL)
-    var headers = {"Content-Type": "application/json"}
-    this.requests[0].respond(401, headers, JSON.stringify({key: "value"}))
-    ;(yield res).body.must.eql({key: "value"})
-  })
-
   // Just in case protect against an erroneous 204, too.
   it("must not set body when response 204", function*() {
     var res = fetch(URL)
     var headers = {"Content-Type": "application/json"}
     this.requests[0].respond(204, headers, "")
-    yield res.must.then.not.have.property("body")
+
+    res = yield res
+    res.must.not.have.property("body")
+    yield res.text().must.then.equal("")
   })
 
   // Facebook's API does that: return a Content-Type header, but no body with
@@ -96,7 +33,10 @@ describe("FetchBody", function() {
     var res = fetch(URL)
     var headers = {"Content-Type": "application/json"}
     this.requests[0].respond(304, headers, "")
-    yield res.must.then.not.have.property("body")
+
+    res = yield res
+    res.must.not.have.property("body")
+    yield res.text().must.then.equal("")
   })
 
   it("must not set body if Content-Type unrecognized", function*() {
@@ -140,5 +80,93 @@ describe("FetchBody", function() {
     this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
     res = yield res
     res.body.must.eql({key: "value"})
+  })
+
+  describe("given JSON Content-Type", function() {
+    it("must parse when Content-Type is application/json", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/json"}
+      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+      ;(yield res).body.must.eql({key: "value"})
+    })
+
+    it("must parse when Content-Type is application/json; charset=utf-8",
+      function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/json; charset=utf-8"}
+      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+      ;(yield res).body.must.eql({key: "value"})
+    })
+
+    it("must parse when Content-Type is application/vnd.foo+json", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/vnd.foo+json"}
+      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+      ;(yield res).body.must.eql({key: "value"})
+    })
+
+    it("must parse when Content-Type is application/vnd.foo+json; v=1",
+      function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/vnd.foo+json; v=1"}
+      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+      ;(yield res).body.must.eql({key: "value"})
+    })
+
+    it("must parse when Content-Type is text/javascript", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "text/javascript"}
+      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+      ;(yield res).body.must.eql({key: "value"})
+    })
+
+    it("must parse when response not OK", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/json"}
+      this.requests[0].respond(401, headers, JSON.stringify({key: "value"}))
+
+      res = yield res
+      res.status.must.equal(401)
+      res.body.must.eql({key: "value"})
+    })
+
+    // This was a released bug with Remote that I noticed on Nov 25, 2014 and
+    // was related to parsing errors not being caught and passed to the
+    // response error handler. Nor its related promise.
+    it("must reject with SyntaxError given invalid JSON", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/json"}
+      this.requests[0].respond(200, headers, "{\"foo\": ")
+
+      var err
+      try { yield res } catch (ex) { err = ex }
+      err.must.be.an.error(SyntaxError, "Unexpected end of input")
+      err.must.have.nonenumerable("response")
+      err.response.must.be.an.instanceof(Fetch.Response)
+    })
+  })
+
+  describe("given text Content-Type", function() {
+    it("must set body if Content-Type is text/plain", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "text/plain"}
+      this.requests[0].respond(200, headers, "Hello")
+      ;(yield res).body.must.equal("Hello")
+    })
+
+    it("must set body if Content-Type is text/plain; charset=utf-8",
+      function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "text/plain; charset=utf-8"}
+      this.requests[0].respond(200, headers, "Hello")
+      ;(yield res).body.must.equal("Hello")
+    })
+
+    it("must set body when response not OK", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "text/plain"}
+      this.requests[0].respond(401, headers, "Hello")
+      ;(yield res).body.must.equal("Hello")
+    })
   })
 })
