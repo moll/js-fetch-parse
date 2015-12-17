@@ -275,6 +275,7 @@ describe("FetchBody", function() {
       err.must.be.an.error(SyntaxError, "Unexpected end of input")
       err.must.have.nonenumerable("response")
       err.response.must.be.an.instanceof(Fetch.Response)
+      err.response.must.have.property("body", undefined)
     })
   })
 })
