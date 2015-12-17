@@ -17,11 +17,12 @@ exports.parse = function(res) {
     case "text":
       return res.text().then(setBody.bind(null, res))
     default:
-      return setBody(res, undefined)
+      return res
   }
 }
 
 function isParseable(res) {
+  if (res.bodyUsed) return false
   if (res.status === 204 || res.status === 304) return false
   var contentType = res.headers.get("content-type")
   return contentType != null && contentType !== ""

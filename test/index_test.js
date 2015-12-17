@@ -1,6 +1,7 @@
 var Sinon = require("sinon")
 var Fetch = require("./fetch")
-var fetch = require("..")(Fetch)
+var FetchBody = require("..")
+var fetch = FetchBody(Fetch)
 var URL = "http://example.com"
 
 describe("FetchBody", function() {
@@ -86,7 +87,7 @@ describe("FetchBody", function() {
     var res = fetch(URL)
     var headers = {"Content-Type": "application/json"}
     this.requests[0].respond(204, headers, "")
-    yield res.must.then.have.property("body", undefined)
+    yield res.must.then.not.have.property("body")
   })
 
   // Facebook's API does that: return a Content-Type header, but no body with
@@ -95,37 +96,49 @@ describe("FetchBody", function() {
     var res = fetch(URL)
     var headers = {"Content-Type": "application/json"}
     this.requests[0].respond(304, headers, "")
-    yield res.must.then.have.property("body", undefined)
+    yield res.must.then.not.have.property("body")
   })
 
-  it("must set body undefined if Content-Type unrecognized", function*() {
+  it("must not set body if Content-Type unrecognized", function*() {
     var res = fetch(URL)
     var headers = {"Content-Type": "application/fancy"}
     this.requests[0].respond(200, headers, "Hello")
 
     res = yield res
     res.headers.get("content-type").must.equal("application/fancy")
-    res.must.have.property("body", undefined)
+    res.must.not.have.property("body")
     yield res.text().must.then.equal("Hello")
   })
 
-  it("must set body undefined if Content-Type invalid", function*() {
+  it("must not set body if Content-Type invalid", function*() {
     var res = fetch(URL)
     var headers = {"Content-Type": "application///"}
     this.requests[0].respond(200, headers, "Hello")
 
     res = yield res
     res.headers.get("content-type").must.equal("application///")
-    res.must.have.property("body", undefined)
+    res.must.not.have.property("body")
     yield res.text().must.then.equal("Hello")
   })
 
-  it("must set body undefined if Content-Type missing", function*() {
+  it("must not set body if Content-Type missing", function*() {
     var res = fetch(URL)
     this.requests[0].respond(200, {}, "Hello")
 
     res = yield res
-    res.must.have.property("body", undefined)
+    res.must.not.have.property("body")
     yield res.text().must.then.equal("Hello")
+  })
+
+  it("must not parse multiple times", function*() {
+    var fetch = Fetch
+    fetch = FetchBody(fetch)
+    fetch = FetchBody(fetch)
+    var res = fetch("/")
+
+    var headers = {"Content-Type": "application/json"}
+    this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+    res = yield res
+    res.body.must.eql({key: "value"})
   })
 })
