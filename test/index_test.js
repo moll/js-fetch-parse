@@ -128,6 +128,25 @@ describe("FetchBody", function() {
     res.body.must.eql({key: "value"})
   })
 
+  // Google Chrome uses the `body` property for streaming. It's implemented
+  // as an enumerable getter with no setter:
+  it("must set body even if a setter", function*() {
+    function fetch(url, opts) {
+      return Fetch(url, opts).then(function(res) {
+        return Object.defineProperty(res, "body", {
+          get: Object, configurable: true, enumerable: true
+        })
+      })
+    }
+
+    var res = FetchBody(fetch)("/")
+
+    var headers = {"Content-Type": "application/json"}
+    this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+    res = yield res
+    res.body.must.eql({key: "value"})
+  })
+
   describe("when Content-Type is text", function() {
     it("must set body given \"text/plain\"", function*() {
       var fetch = FetchBody(Fetch, ["text/plain"])

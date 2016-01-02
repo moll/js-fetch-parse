@@ -44,8 +44,9 @@ function classifyType(type) {
 }
 
 function setBody(res, body) {
-  res.body = body
-  return res
+  return Object.defineProperty(res, "body", {
+    value: body, configurable: true, writable: true, enumerable: true
+  })
 }
 
 function parseJson(res, body) {

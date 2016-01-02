@@ -1,3 +1,7 @@
+## Unreleased
+- Assigns the `body` property with `Object.defineProperty` to work on Fetch
+  implementations that already have `body` as a getter.
+
 ## 0.2.0 (Dec 17, 2015)
 - Skips parsing again if body already used (`res.bodyUsed`).  
   This also means `body` _won't be_ set `undefined` in cases where the
