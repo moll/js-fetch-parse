@@ -1,4 +1,4 @@
-## Unreleased
+## 0.2.1 (Jan 2, 2016)
 - Assigns the `body` property with `Object.defineProperty` to work on Fetch
   implementations that already have `body` as a getter.
 
