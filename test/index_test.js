@@ -3,6 +3,7 @@ var Fetch = require("./fetch")
 var FetchBody = require("..")
 var fetch = FetchBody(Fetch)
 var URL = "http://example.com"
+var GIF = new Buffer("R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=", "base64")
 
 describe("FetchBody", function() {
   beforeEach(function() {
@@ -306,6 +307,18 @@ describe("FetchBody", function() {
       err.must.have.nonenumerable("response")
       err.response.must.be.an.instanceof(Fetch.Response)
       err.response.must.have.property("body", "{\"foo\": ")
+    })
+  })
+
+  describe("when Content-Type is image/*", function() {
+    it("must set body to ArrayBuffer", function*() {
+      var fetch = FetchBody(Fetch, ["image/*"])
+      var res = fetch("/")
+      var headers = {"Content-Type": "image/gif"}
+      this.requests[0].respond(200, headers, GIF.toString("binary"))
+      res = yield res
+      res.body.must.be.an.instanceof(ArrayBuffer)
+      new Buffer(res.body).equals(GIF).must.be.true()
     })
   })
 })

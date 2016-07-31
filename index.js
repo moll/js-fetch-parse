@@ -1,7 +1,7 @@
 var MediaType = require("medium-type")
 var concat = Array.prototype.concat.bind(Array.prototype)
 var TEXT = new MediaType("text/*")
-var JSONS = ["application/json", "*/*+json"].map(MediaType)
+var JSONS = ["application/json", "*/*+json"].map(MediaType.parse)
 var ALL = concat(TEXT, JSONS)
 
 exports = module.exports = function(fetch, types) {
@@ -21,6 +21,7 @@ exports.parse = function(types, res) {
   switch (matchesTypes(type, types) ? classifyType(type) : null) {
     case "json": return res.text().then(parseJson.bind(null, res))
     case "text": return res.text().then(setBody.bind(null, res))
+    case "buffer": return res.arrayBuffer().then(setBody.bind(null, res))
     default: return res
   }
 }
@@ -40,7 +41,7 @@ function matchesTypes(type, types) {
 function classifyType(type) {
   if (type.type === "text") return "text"
   if (JSONS.some(type.match, type)) return "json"
-  return "text"
+  return "buffer"
 }
 
 function setBody(res, body) {
