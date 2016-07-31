@@ -1,4 +1,4 @@
-## Unreleased
+## 0.3.0 (Jul 31, 2016)
 - Sets `body` to what `arrayBuffer` returns when type not text or JSON.
 
 ## 0.2.1 (Jan 2, 2016)
