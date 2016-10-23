@@ -303,7 +303,7 @@ describe("FetchBody", function() {
 
       var err
       try { yield res } catch (ex) { err = ex }
-      err.must.be.an.error(SyntaxError, "Unexpected end of input")
+      err.must.be.an.error(SyntaxError, /Unexpected end/)
       err.must.have.nonenumerable("response")
       err.response.must.be.an.instanceof(Fetch.Response)
       err.response.must.have.property("body", "{\"foo\": ")
