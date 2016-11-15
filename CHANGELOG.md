@@ -1,5 +1,8 @@
 ## Unreleased
 - Renames to FetchParse.js.
+- Adds support for passing in an object of types and parsers.  
+  For a parsers pass either a function taking a `Response` object and returning a `Promise` with the body or `true` to use the default parser for that type.
+- Removes support for passing in an array of types to use default parsers.
 
 ## 0.3.0 (Jul 31, 2016)
 - Sets `body` to what `arrayBuffer` returns when type not text or JSON.

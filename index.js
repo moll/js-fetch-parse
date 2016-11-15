@@ -1,11 +1,11 @@
 var MediaType = require("medium-type")
 var concat = Array.prototype.concat.bind(Array.prototype)
-var TEXT = new MediaType("text/*")
 var JSONS = ["application/json", "*/*+json"].map(MediaType.parse)
-var ALL = concat(TEXT, JSONS)
+var WILDCARD_PARSER = [[new MediaType("*/*"), null]]
+var PARSER_TYPE_ERR = "Parser not a function or true for default: "
 
 exports = module.exports = function(fetch, types) {
-  types = types == null ? ALL : normalizeTypes(types)
+  types = types == null ? WILDCARD_PARSER : getParsers(types)
   return assign(exports.fetch.bind(null, fetch, types), fetch)
 }
 
@@ -18,11 +18,51 @@ exports.parse = function(types, res) {
   var type = parseType(res.headers.get("content-type"))
   if (type == null) return res
 
-  switch (matchesTypes(type, types) ? classifyType(type) : null) {
-    case "json": return res.text().then(parseJson.bind(null, res))
-    case "text": return res.text().then(setBody.bind(null, res))
-    case "buffer": return res.arrayBuffer().then(setBody.bind(null, res))
-    default: return res
+  var parse = findParser(types, type)
+  return parse ? parse(res).then(exports.set.bind(null, res)) : res
+}
+
+exports.arrayBuffer = function(res) {
+  return res.arrayBuffer()
+}
+
+exports.text = function(res) {
+  return res.text()
+}
+
+exports.json = function(res) {
+  /* eslint consistent-return: 0 */
+  return res.text().then(function(body) {
+    if (body !== "") try { return JSON.parse(body) }
+    catch (ex) { exports.set(res, body); throw errorify(res, ex) }
+    else return undefined
+  })
+}
+
+exports.set = function(res, body) {
+  return Object.defineProperty(res, "body", {
+    value: body, configurable: true, writable: true, enumerable: true
+  })
+}
+
+function getParsers(types) {
+  if (typeof types != "object") throw new TypeError("Parsers must be an object")
+
+  return flatten(map(function(parser, type) {
+    var types = expandType(type)
+    if (parser === true)
+      return types.map(function(type) { return [type, null] })
+    else if (typeof parser == "function")
+      return types.map(function(type) { return [type, parser] })
+    else
+      throw new TypeError(PARSER_TYPE_ERR + parser)
+  }, types))
+}
+
+function expandType(type) {
+  switch (type) {
+    case "json": return JSONS
+    default: return [new MediaType(type)]
   }
 }
 
@@ -33,42 +73,6 @@ function hasContent(res) {
   return contentType != null && contentType !== ""
 }
 
-function matchesTypes(type, types) {
-  for (var i = 0; i < types.length; ++i) if (type.match(types[i])) return true
-  return false
-}
-
-function classifyType(type) {
-  if (type.type === "text") return "text"
-  if (JSONS.some(type.match, type)) return "json"
-  return "buffer"
-}
-
-function setBody(res, body) {
-  return Object.defineProperty(res, "body", {
-    value: body, configurable: true, writable: true, enumerable: true
-  })
-}
-
-function parseJson(res, body) {
-  if (body !== "") try { return setBody(res, JSON.parse(body)) }
-  catch (ex) { setBody(res, body); throw errorify(res, ex) }
-  else return setBody(res, undefined)
-}
-
-function errorify(res, err) {
-  return Object.defineProperty(err, "response", {
-    value: res, configurable: true, writable: true
-  })
-}
-
-function normalizeType(type) {
-  switch (type) {
-    case "json": return JSONS
-    default: return type instanceof MediaType ? type : new MediaType(type)
-  }
-}
-
 function parseType(type) {
   try { return new MediaType(type) }
   catch (ex) {
@@ -77,6 +81,30 @@ function parseType(type) {
   }
 }
 
+function findParser(types, type) {
+  for (var i = 0; i < types.length; ++i)
+    if (type.match(types[i][0])) return types[i][1] || getDefaultParser(type)
+
+  return null
+}
+
+function getDefaultParser(type) {
+  if (type.type === "text") return exports.text
+  if (JSONS.some(type.match, type)) return exports.json
+  return exports.arrayBuffer
+}
+
+function errorify(res, err) {
+  return Object.defineProperty(err, "response", {
+    value: res, configurable: true, writable: true
+  })
+}
+
+function map(fn, obj) {
+  var mapped = []
+  for (var key in obj) mapped.push(fn(obj[key], key))
+  return mapped
+}
+
 function assign(a, b) { for (var k in b) a[k] = b[k]; return a }
-function normalizeTypes(types) { return flatten(types.map(normalizeType)) }
 function flatten(array) { return concat.apply(null, array) }
