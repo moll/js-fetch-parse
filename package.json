@@ -1,10 +1,10 @@
 {
-	"name": "@moll/fetch-body",
+	"name": "@moll/fetch-parse",
 	"version": "0.3.0",
 	"description": "",
 	"keywords": [],
-	"homepage": "https://github.com/moll/js-fetch-body",
-	"bugs": "https://github.com/moll/js-fetch-body/issues",
+	"homepage": "https://github.com/moll/js-fetch-parse",
+	"bugs": "https://github.com/moll/js-fetch-parse/issues",
 
 	"author": {
 		"name": "Andri Möll",
@@ -14,12 +14,12 @@
 
 	"repository": {
 		"type": "git",
-		"url": "git://github.com/moll/js-fetch-body.git"
+		"url": "git://github.com/moll/js-fetch-parse.git"
 	},
 
 	"licenses": [{
 		"type": "LAGPL",
-		"url": "https://github.com/moll/js-fetch-body/blob/master/LICENSE"
+		"url": "https://github.com/moll/js-fetch-parse/blob/master/LICENSE"
 	}],
 
 	"main": "index.js",

@@ -1,11 +1,11 @@
 var Sinon = require("sinon")
 var Fetch = require("./fetch")
-var FetchBody = require("..")
-var fetch = FetchBody(Fetch)
+var FetchParse = require("..")
+var fetch = FetchParse(Fetch)
 var URL = "http://example.com"
 var GIF = new Buffer("R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=", "base64")
 
-describe("FetchBody", function() {
+describe("FetchParse", function() {
   beforeEach(function() {
     var xhr = global.XMLHttpRequest = Sinon.FakeXMLHttpRequest
     xhr.onCreate = Array.prototype.push.bind(this.requests = [])
@@ -37,7 +37,7 @@ describe("FetchBody", function() {
   })
 
   it("must set body if type given exactly", function*() {
-    var fetch = FetchBody(Fetch, ["text/markdown"])
+    var fetch = FetchParse(Fetch, ["text/markdown"])
     var res = fetch("/")
     var headers = {"Content-Type": "text/markdown"}
     this.requests[0].respond(200, headers, "# Hello")
@@ -45,7 +45,7 @@ describe("FetchBody", function() {
   })
 
   it("must set body if type given with wildcard", function*() {
-    var fetch = FetchBody(Fetch, ["text/*"])
+    var fetch = FetchParse(Fetch, ["text/*"])
     var res = fetch("/")
     var headers = {"Content-Type": "text/markdown"}
     this.requests[0].respond(200, headers, "# Hello")
@@ -53,7 +53,7 @@ describe("FetchBody", function() {
   })
 
   it("must not set body if type not given", function*() {
-    var fetch = FetchBody(Fetch, ["text/plain"])
+    var fetch = FetchParse(Fetch, ["text/plain"])
     var res = fetch("/")
     var headers = {"Content-Type": "text/markdown"}
     this.requests[0].respond(200, headers, "Hello")
@@ -119,8 +119,8 @@ describe("FetchBody", function() {
 
   it("must not parse multiple times", function*() {
     var fetch = Fetch
-    fetch = FetchBody(fetch)
-    fetch = FetchBody(fetch)
+    fetch = FetchParse(fetch)
+    fetch = FetchParse(fetch)
     var res = fetch("/")
 
     var headers = {"Content-Type": "application/json"}
@@ -140,7 +140,7 @@ describe("FetchBody", function() {
       })
     }
 
-    var res = FetchBody(fetch)("/")
+    var res = FetchParse(fetch)("/")
 
     var headers = {"Content-Type": "application/json"}
     this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
@@ -150,7 +150,7 @@ describe("FetchBody", function() {
 
   describe("when Content-Type is text", function() {
     it("must set body given \"text/plain\"", function*() {
-      var fetch = FetchBody(Fetch, ["text/plain"])
+      var fetch = FetchParse(Fetch, ["text/plain"])
       var res = fetch("/")
       var headers = {"Content-Type": "text/plain"}
       this.requests[0].respond(200, headers, "Hello")
@@ -203,7 +203,7 @@ describe("FetchBody", function() {
 
   describe("when Content-Type is JSON", function() {
     it("must parse JSON given \"json\"", function*() {
-      var fetch = FetchBody(Fetch, ["json"])
+      var fetch = FetchParse(Fetch, ["json"])
 
       var res = fetch(URL)
       var headers = {"Content-Type": "application/json"}
@@ -212,7 +212,7 @@ describe("FetchBody", function() {
     })
 
     it("must parse JSON given \"application/json\"", function*() {
-      var fetch = FetchBody(Fetch, ["application/json"])
+      var fetch = FetchParse(Fetch, ["application/json"])
 
       var res = fetch(URL)
       var headers = {"Content-Type": "application/json"}
@@ -261,7 +261,7 @@ describe("FetchBody", function() {
     })
 
     it("must not parse JSON if not asked", function*() {
-      var fetch = FetchBody(Fetch, ["text/plain"])
+      var fetch = FetchParse(Fetch, ["text/plain"])
       var res = fetch("/")
       var headers = {"Content-Type": "application/json"}
       this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
@@ -312,7 +312,7 @@ describe("FetchBody", function() {
 
   describe("when Content-Type is image/*", function() {
     it("must set body to ArrayBuffer", function*() {
-      var fetch = FetchBody(Fetch, ["image/*"])
+      var fetch = FetchParse(Fetch, ["image/*"])
       var res = fetch("/")
       var headers = {"Content-Type": "image/gif"}
       this.requests[0].respond(200, headers, GIF.toString("binary"))

@@ -1,3 +1,6 @@
+## Unreleased
+- Renames to FetchParse.js.
+
 ## 0.3.0 (Jul 31, 2016)
 - Sets `body` to what `arrayBuffer` returns when type not text or JSON.
 
