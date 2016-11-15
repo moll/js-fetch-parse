@@ -1,6 +1,7 @@
 var MediaType = require("medium-type")
 var concat = Array.prototype.concat.bind(Array.prototype)
 var JSONS = ["application/json", "*/*+json"].map(MediaType.parse)
+var XMLS = ["application/xml", "*/*+xml"].map(MediaType.parse)
 var WILDCARD_PARSER = [[new MediaType("*/*"), null]]
 var PARSER_TYPE_ERR = "Parser not a function or true for default: "
 
@@ -62,6 +63,7 @@ function getParsers(types) {
 function expandType(type) {
   switch (type) {
     case "json": return JSONS
+    case "xml": return XMLS
     default: return [new MediaType(type)]
   }
 }
@@ -91,6 +93,7 @@ function findParser(types, type) {
 function getDefaultParser(type) {
   if (type.type === "text") return exports.text
   if (JSONS.some(type.match, type)) return exports.json
+  if (XMLS.some(type.match, type)) return exports.text
   return exports.arrayBuffer
 }
 

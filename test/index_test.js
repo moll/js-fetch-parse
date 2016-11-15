@@ -394,4 +394,66 @@ describe("FetchParse", function() {
       err.response.must.have.property("body", "{\"foo\": ")
     })
   })
+
+  describe("when Content-Type is XML", function() {
+    it("must set body by default", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/xml"}
+      this.requests[0].respond(200, headers, "<name>John</name>")
+      ;(yield res).body.must.equal("<name>John</name>")
+    })
+
+    it("must set body given \"xml\"", function*() {
+      var fetch = FetchParse(Fetch, {"xml": true})
+
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/xml"}
+      this.requests[0].respond(200, headers, "<name>John</name>")
+      ;(yield res).body.must.equal("<name>John</name>")
+    })
+
+    it("must parse JSON given \"xml\" and parser", function*() {
+      var fetch = FetchParse(Fetch, {
+        "xml": function(res) {
+          return res.text().then(function(obj) { return {name: "John"} })
+        }
+      })
+
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/xml"}
+      this.requests[0].respond(200, headers, "<name>John</name>")
+      ;(yield res).body.must.eql({name: "John"})
+    })
+
+    it("must set body given \"application/xml\"", function*() {
+      var fetch = FetchParse(Fetch, {"application/xml": true})
+
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/xml"}
+      this.requests[0].respond(200, headers, "<name>John</name>")
+      ;(yield res).body.must.equal("<name>John</name>")
+    })
+
+    it("must parse when Content-Type is application/xml", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/xml"}
+      this.requests[0].respond(200, headers, "<name>John</name>")
+      ;(yield res).body.must.equal("<name>John</name>")
+    })
+
+    it("must parse when Content-Type is application/xml; charset=utf-8",
+      function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/xml; charset=utf-8"}
+      this.requests[0].respond(200, headers, "<name>John</name>")
+      ;(yield res).body.must.equal("<name>John</name>")
+      })
+
+    it("must parse when Content-Type is application/vnd.foo+xml", function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/vnd.foo+xml"}
+      this.requests[0].respond(200, headers, "<name>John</name>")
+      ;(yield res).body.must.equal("<name>John</name>")
+    })
+  })
 })
