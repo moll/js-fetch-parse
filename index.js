@@ -5,7 +5,7 @@ var WILDCARD_PARSER = [[new MediaType("*/*"), null]]
 var PARSER_TYPE_ERR = "Parser not a function or true for default: "
 
 exports = module.exports = function(fetch, types) {
-  types = types == null ? WILDCARD_PARSER : getParsers(types)
+  types = types == null ? WILDCARD_PARSER : parseParsers(types)
   return assign(exports.fetch.bind(null, fetch, types), fetch)
 }
 
@@ -45,7 +45,7 @@ exports.set = function(res, body) {
   })
 }
 
-function getParsers(types) {
+function parseParsers(types) {
   return reduce(function(pairs, parser, type) {
     var types = expandType(type)
 
