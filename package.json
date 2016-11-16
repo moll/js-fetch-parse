@@ -1,5 +1,5 @@
 {
-	"name": "@moll/fetch-parse",
+	"name": "fetch-parse",
 	"version": "0.3.0",
 	"description": "Fetch API mixin to buffer and parse response bodies. Supports media type patterns for content type specific custom parsers",
 	"keywords": [
