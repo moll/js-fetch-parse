@@ -36,7 +36,7 @@ var fetchParse = require("fetch-parse")
 var apiFetch = fetchParse(fetch, {"*/*": true})
 ```
 
-Now, calling `apiFetch` will give you back a promise with a regular `Response` object, but with the `body` property assigned to the buffered response body:
+Now, calling `apiFetch` will give you back a `Promise` with a regular `Response` object, but with the `body` property assigned to the buffered response body:
 
 ```javascript
 apiFetch("/users").then(function(res) {
@@ -84,7 +84,7 @@ Shorthand | Types
 [rfc6839]: https://tools.ietf.org/html/rfc6839
 
 ### Custom Parsers
-To use a custom parser for some media types, pass an object mapping a media type pattern to that parse function. The parse function must take a `Fetch.Request` object and return a promise of a body. FetchParse.js will itself assign that to the `body` property on the response object.
+To use a custom parser for some media types, pass an object mapping a media type pattern to that parse function. The parse function must take a `Fetch.Request` object and return a `Promise` of a body. FetchParse.js will itself assign that to the `body` property on the response object.
 
 ```javascript
 var fetchParse = require("fetch-parse")
