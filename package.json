@@ -1,8 +1,10 @@
 {
 	"name": "@moll/fetch-parse",
 	"version": "0.3.0",
-	"description": "",
-	"keywords": [],
+	"description": "Fetch API mixin to buffer and parse response bodies. Supports media type patterns for content type specific custom parsers",
+	"keywords": [
+		"fetch"
+	],
 	"homepage": "https://github.com/moll/js-fetch-parse",
 	"bugs": "https://github.com/moll/js-fetch-parse/issues",
 
