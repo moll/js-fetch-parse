@@ -1,4 +1,4 @@
-## Unreleased
+## 1.0.0 (Nov 16, 2016)
 - Renames to FetchParse.js.
 - Adds support for passing in an object of types and parsers.  
   For a parsers pass either a function taking a `Response` object and returning a `Promise` with the body or `true` to use the default parser for that type.
