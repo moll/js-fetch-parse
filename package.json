@@ -28,7 +28,7 @@
 	"scripts": {"test": "make test"},
 
 	"dependencies": {
-    "medium-type": "^1.0.0"
+		"medium-type": "^1.0.0"
 	},
 
 	"devDependencies": {
