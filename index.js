@@ -1,5 +1,4 @@
 var MediaType = require("medium-type")
-var concat = Array.prototype.concat.bind(Array.prototype)
 var JSONS = ["application/json", "*/*+json"].map(MediaType.parse)
 var XMLS = ["application/xml", "*/*+xml"].map(MediaType.parse)
 var WILDCARD_PARSER = [[new MediaType("*/*"), null]]
@@ -47,15 +46,16 @@ exports.set = function(res, body) {
 }
 
 function getParsers(types) {
-  return flatten(map(function(parser, type) {
+  return reduce(function(pairs, parser, type) {
     var types = expandType(type)
+
     if (parser === true)
-      return types.map(function(type) { return [type, null] })
+      return pairs.concat(types.map(function(type) { return [type, null] }))
     else if (typeof parser == "function")
-      return types.map(function(type) { return [type, parser] })
+      return pairs.concat(types.map(function(type) { return [type, parser] }))
     else
       throw new TypeError(PARSER_TYPE_ERR + parser)
-  }, types))
+  }, [], types)
 }
 
 function expandType(type) {
@@ -101,11 +101,9 @@ function errorify(res, err) {
   })
 }
 
-function map(fn, obj) {
-  var mapped = []
-  for (var key in obj) mapped.push(fn(obj[key], key))
-  return mapped
+function reduce(fn, left, obj) {
+  for (var key in obj) left = fn(left, obj[key], key)
+  return left
 }
 
 function assign(a, b) { for (var k in b) a[k] = b[k]; return a }
-function flatten(array) { return concat.apply(null, array) }
