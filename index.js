@@ -47,8 +47,6 @@ exports.set = function(res, body) {
 }
 
 function getParsers(types) {
-  if (typeof types != "object") throw new TypeError("Parsers must be an object")
-
   return flatten(map(function(parser, type) {
     var types = expandType(type)
     if (parser === true)
