@@ -54,7 +54,6 @@ var fetchParse = require("fetch-parse")
 
 var apiFetch = fetchParse(fetch, {
   "text/markdown": true,
-  "xml": true,
   "json": true,
 })
 ```
@@ -72,7 +71,7 @@ FetchParse.js uses [MediumType.js][medium-type]'s [`MediumType.prototype.match`]
 `*/*+xml`          | _See `application/xml` above._
 `*/*`              | Calls `res.arrayBuffer()` and returns an `ArrayBuffer`.
 
-#### Suffixes
+#### Shorthands
 Aside from regular media type patterns, FetchParse.js has two shorthands for JSON and XML. That's because [RFC 6839][rfc6839] specifies standardized suffices for those two in addition to `application/json` and `application/xml`. Using `json` for example saves you from having to specify both patterns explicitly.
 
 Shorthand | Types
@@ -83,7 +82,7 @@ Shorthand | Types
 [rfc6839]: https://tools.ietf.org/html/rfc6839
 
 ### Custom Parsers
-To use a custom parser for some media types, pass an object mapping a media type pattern to that parse function. The parse function must take a `Fetch.Request` object and return a body.
+To use a custom parser for some media types, pass an object mapping a media type pattern to that parse function. The parse function must take a `Fetch.Request` object and return a promise of a body. FetchParse.js will itself assign that to the `body` property on the response object.
 
 ```javascript
 var fetchParse = require("fetch-parse")
