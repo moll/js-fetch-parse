@@ -1,10 +1,12 @@
 FetchParse.js
 =============
 [![NPM version][npm-badge]](https://www.npmjs.com/package/fetch-parse)
+[![Build status][travis-badge]](https://travis-ci.org/moll/js-fetch-parse)
 
 FetchParse.js is a mixin for the [Fetch API][fetch] for browsers and Node.js that **automatically buffers response bodies** and assigns them as `body` on the response object (saving you from extra `res.text()` or `res.json()` calls). It can also **optionally parse response bodies** based on the `Content-Type` header (using [MediumType.js][medium-type] for media types).
 
 [npm-badge]: https://img.shields.io/npm/v/fetch-parse.svg
+[travis-badge]: https://travis-ci.org/moll/js-fetch-parse.png?branch=master
 [fetch]: https://developer.mozilla.org/en/docs/Web/API/Fetch_API
 [medium-type]: https://github.com/moll/js-medium-type
 
