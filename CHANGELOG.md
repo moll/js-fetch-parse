@@ -1,4 +1,4 @@
-## Unreleased
+## 1.1.0 (Nov 20, 2016)
 - Adds `text/xml` to the list of XML content-types.
 
 ## 1.0.0 (Nov 16, 2016)

@@ -1,6 +1,6 @@
 {
 	"name": "fetch-parse",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "Fetch API mixin to buffer and parse response bodies. Supports media type patterns for content type specific custom parsers",
 	"keywords": [
 		"fetch"
