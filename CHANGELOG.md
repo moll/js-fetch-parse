@@ -1,3 +1,6 @@
+## Unreleased
+- Adds `text/xml` to the list of XML content-types.
+
 ## 1.0.0 (Nov 16, 2016)
 - Renames to FetchParse.js.
 - Adds support for passing in an object of types and parsers.  

@@ -1,6 +1,6 @@
 var MediaType = require("medium-type")
 var JSONS = ["application/json", "*/*+json"].map(MediaType.parse)
-var XMLS = ["application/xml", "*/*+xml"].map(MediaType.parse)
+var XMLS = ["application/xml", "text/xml", "*/*+xml"].map(MediaType.parse)
 var WILDCARD_PARSER = [[new MediaType("*/*"), null]]
 var PARSER_TYPE_ERR = "Parser not a function or true for default: "
 

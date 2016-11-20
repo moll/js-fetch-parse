@@ -418,6 +418,13 @@ describe("FetchParse", function() {
         ;(yield res).body.must.equal("<name>John</name>")
       })
 
+      it("must set body when Content-Type is text/xml", function*() {
+        var res = fetch(URL)
+        var headers = {"Content-Type": "text/xml"}
+        this.requests[0].respond(200, headers, "<name>John</name>")
+        ;(yield res).body.must.equal("<name>John</name>")
+      })
+
       it("must parse when Content-Type is application/vnd.foo+xml",
         function*() {
         var res = fetch(URL)
