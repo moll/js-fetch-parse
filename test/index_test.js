@@ -115,7 +115,7 @@ describe("FetchParse", function() {
     yield res.text().must.then.equal("")
   })
 
-  it("must not set body if Content-Type unrecognized", function*() {
+  it("must not set body when Content-Type unrecognized", function*() {
     var fetch = FetchParse(Fetch, {"application/json": true})
     var res = fetch(URL)
     var headers = {"Content-Type": "application/fancy"}
@@ -127,7 +127,7 @@ describe("FetchParse", function() {
     yield res.text().must.then.equal("Hello")
   })
 
-  it("must not set body if Content-Type invalid", function*() {
+  it("must not set body when Content-Type invalid", function*() {
     var res = fetch(URL)
     var headers = {"Content-Type": "application///"}
     this.requests[0].respond(200, headers, "Hello")
@@ -138,7 +138,7 @@ describe("FetchParse", function() {
     yield res.text().must.then.equal("Hello")
   })
 
-  it("must not set body if Content-Type missing", function*() {
+  it("must not set body when Content-Type missing", function*() {
     var res = fetch(URL)
     this.requests[0].respond(200, {}, "Hello")
 
@@ -177,66 +177,22 @@ describe("FetchParse", function() {
     res.body.must.eql({key: "value"})
   })
 
-  describe("when Content-Type is application/*", function() {
-    it("must set body by default", function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/octet-stream"}
-      this.requests[0].respond(200, headers, GIF.toString("binary"))
-      res = yield res
-      res.body.must.be.an.instanceof(ArrayBuffer)
-      new Buffer(res.body).equals(GIF).must.be.true()
-    })
-
-    it("must set body to ArrayBuffer", function*() {
-      var fetch = FetchParse(Fetch, {"application/*": true})
-      var res = fetch("/")
-      var headers = {"Content-Type": "application/octet-stream"}
-      this.requests[0].respond(200, headers, GIF.toString("binary"))
-      res = yield res
-      res.body.must.be.an.instanceof(ArrayBuffer)
-      new Buffer(res.body).equals(GIF).must.be.true()
-    })
-  })
-
-  describe("when Content-Type is text/*", function() {
-    it("must set body by default", function*() {
+  describe("when Content-Type is text", function() {
+    it("must set body by default when Content-Type is text/plain", function*() {
       var res = fetch(URL)
       var headers = {"Content-Type": "text/plain"}
       this.requests[0].respond(200, headers, "Hello")
       ;(yield res).body.must.equal("Hello")
     })
 
-    it("must set body given \"text/plain\"", function*() {
-      var fetch = FetchParse(Fetch, {"text/plain": true})
-      var res = fetch("/")
-      var headers = {"Content-Type": "text/plain"}
-      this.requests[0].respond(200, headers, "Hello")
-      ;(yield res).body.must.equal("Hello")
-    })
-
-    it("must set body given \"text/plain\" as object", function*() {
-      var fetch = FetchParse(Fetch, {"text/plain": true})
-      var res = fetch("/")
-      var headers = {"Content-Type": "text/plain"}
-      this.requests[0].respond(200, headers, "Hello")
-      ;(yield res).body.must.equal("Hello")
-    })
-
-    it("must set body if Content-Type is text/plain", function*() {
+    it("must set body when Content-Type is text/plain", function*() {
       var res = fetch(URL)
       var headers = {"Content-Type": "text/plain"}
       this.requests[0].respond(200, headers, "Hello")
       ;(yield res).body.must.equal("Hello")
     })
 
-    it("must set body if Content-Type is text/plain", function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "text/plain"}
-      this.requests[0].respond(200, headers, "Hello")
-      ;(yield res).body.must.equal("Hello")
-    })
-
-    it("must set body if Content-Type is text/plain; charset=utf-8",
+    it("must set body when Content-Type is text/plain; charset=utf-8",
       function*() {
       var res = fetch(URL)
       var headers = {"Content-Type": "text/plain; charset=utf-8"}
@@ -251,7 +207,7 @@ describe("FetchParse", function() {
       ;(yield res).body.must.equal(JSON.stringify({key: "value"}))
     })
 
-    it("must set body if Content-Length 0", function*() {
+    it("must set body when Content-Length 0", function*() {
       var res = fetch(URL, {method: "HEAD"})
       var headers = {"Content-Type": "text/plain", "Content-Length": "0"}
       this.requests[0].respond(200, headers, "")
@@ -264,73 +220,31 @@ describe("FetchParse", function() {
       this.requests[0].respond(401, headers, "Hello")
       ;(yield res).body.must.equal("Hello")
     })
+
+    describe("given text/plain", function() {
+      it("must set body when Content-Type is text/plain", function*() {
+        var fetch = FetchParse(Fetch, {"text/plain": true})
+        var res = fetch("/")
+        var headers = {"Content-Type": "text/plain"}
+        this.requests[0].respond(200, headers, "Hello")
+        ;(yield res).body.must.equal("Hello")
+      })
+    })
   })
 
-  describe("when Content-Type is application/json or +json", function() {
-    it("must parse by default", function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/json"}
-      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-      ;(yield res).body.must.eql({key: "value"})
-    })
-
-    it("must parse JSON given \"json\"", function*() {
-      var fetch = FetchParse(Fetch, {"json": true})
-
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/json"}
-      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-      ;(yield res).body.must.eql({key: "value"})
-    })
-
-    it("must parse JSON given \"json\" and parser", function*() {
-      var fetch = FetchParse(Fetch, {
-        "json": function(res) {
-          return res.json().then(function(obj) { return {lock: obj} })
-        }
-      })
-
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/json"}
-      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-      ;(yield res).body.must.eql({lock: {key: "value"}})
-    })
-
-    it("must parse JSON given \"application/json\"", function*() {
-      var fetch = FetchParse(Fetch, {"application/json": true})
-
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/json"}
-      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-      ;(yield res).body.must.eql({key: "value"})
-    })
-
-    it("must parse when Content-Type is application/json", function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/json"}
-      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-      ;(yield res).body.must.eql({key: "value"})
-    })
-
-    it("must parse when Content-Type is application/json; charset=utf-8",
+  describe("when Content-Type is JSON", function() {
+    it("must parse by default when Content-Type is application/json",
       function*() {
       var res = fetch(URL)
-      var headers = {"Content-Type": "application/json; charset=utf-8"}
+      var headers = {"Content-Type": "application/json"}
       this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
       ;(yield res).body.must.eql({key: "value"})
     })
 
-    it("must parse when Content-Type is application/vnd.foo+json", function*() {
+    it("must parse by default when Content-Type is application/vnd.foo+json",
+      function*() {
       var res = fetch(URL)
       var headers = {"Content-Type": "application/vnd.foo+json"}
-      this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
-      ;(yield res).body.must.eql({key: "value"})
-    })
-
-    it("must parse when Content-Type is application/vnd.foo+json; v=1",
-      function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/vnd.foo+json; v=1"}
       this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
       ;(yield res).body.must.eql({key: "value"})
     })
@@ -357,7 +271,7 @@ describe("FetchParse", function() {
 
     // Some implementations respond to HEAD requests with a Content-Type, but
     // Content-Lenght of 0. This saves throwing a parse error.
-    it("must set body to undefined if Content-Length 0", function*() {
+    it("must set body to undefined when Content-Length is 0", function*() {
       var res = fetch(URL, {method: "HEAD"})
       var headers = {"Content-Type": "application/json", "Content-Length": "0"}
       this.requests[0].respond(200, headers, "")
@@ -367,7 +281,7 @@ describe("FetchParse", function() {
       res.bodyUsed.must.be.true()
     })
 
-    it("must set body to undefined if Content-Length, but no content",
+    it("must set body to undefined when Content-Length, but no content",
       function*() {
       var res = fetch(URL, {method: "HEAD"})
       var headers = {"Content-Type": "application/json", "Content-Length": "13"}
@@ -393,67 +307,160 @@ describe("FetchParse", function() {
       err.response.must.be.an.instanceof(Fetch.Response)
       err.response.must.have.property("body", "{\"foo\": ")
     })
+
+    describe("given json", function() {
+      var fetch = FetchParse(Fetch, {"json": true})
+
+      it("must parse when Content-Type is application/json",
+        function*() {
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/json"}
+        this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+        ;(yield res).body.must.eql({key: "value"})
+      })
+
+      it("must parse with parser when Content-Type is application/json",
+        function*() {
+        var fetch = FetchParse(Fetch, {
+          "json": function(res) {
+            return res.json().then(function(obj) { return {lock: obj} })
+          }
+        })
+
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/json"}
+        this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+        ;(yield res).body.must.eql({lock: {key: "value"}})
+      })
+
+      it("must parse when Content-Type is application/json; charset=utf-8",
+        function*() {
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/json; charset=utf-8"}
+        this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+        ;(yield res).body.must.eql({key: "value"})
+      })
+
+      it("must parse when Content-Type is application/vnd.foo+json",
+        function*() {
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/vnd.foo+json"}
+        this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+        ;(yield res).body.must.eql({key: "value"})
+      })
+
+      it("must parse when Content-Type is application/vnd.foo+json; v=1",
+        function*() {
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/vnd.foo+json; v=1"}
+        this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+        ;(yield res).body.must.eql({key: "value"})
+      })
+    })
+
+    describe("given application/json", function() {
+      it("must parse JSON when Content-Type is application/json", function*() {
+        var fetch = FetchParse(Fetch, {"application/json": true})
+
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/json"}
+        this.requests[0].respond(200, headers, JSON.stringify({key: "value"}))
+        ;(yield res).body.must.eql({key: "value"})
+      })
+    })
   })
 
   describe("when Content-Type is XML", function() {
-    it("must set body by default", function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/xml"}
-      this.requests[0].respond(200, headers, "<name>John</name>")
-      ;(yield res).body.must.equal("<name>John</name>")
-    })
-
-    it("must set body given \"xml\"", function*() {
-      var fetch = FetchParse(Fetch, {"xml": true})
-
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/xml"}
-      this.requests[0].respond(200, headers, "<name>John</name>")
-      ;(yield res).body.must.equal("<name>John</name>")
-    })
-
-    it("must parse JSON given \"xml\" and parser", function*() {
-      var fetch = FetchParse(Fetch, {
-        "xml": function(res) {
-          return res.text().then(function(obj) { return {name: "John"} })
-        }
-      })
-
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/xml"}
-      this.requests[0].respond(200, headers, "<name>John</name>")
-      ;(yield res).body.must.eql({name: "John"})
-    })
-
-    it("must set body given \"application/xml\"", function*() {
-      var fetch = FetchParse(Fetch, {"application/xml": true})
-
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/xml"}
-      this.requests[0].respond(200, headers, "<name>John</name>")
-      ;(yield res).body.must.equal("<name>John</name>")
-    })
-
-    it("must parse when Content-Type is application/xml", function*() {
-      var res = fetch(URL)
-      var headers = {"Content-Type": "application/xml"}
-      this.requests[0].respond(200, headers, "<name>John</name>")
-      ;(yield res).body.must.equal("<name>John</name>")
-    })
-
-    it("must parse when Content-Type is application/xml; charset=utf-8",
+    it("must set body by default when Content-Type is application/xml",
       function*() {
       var res = fetch(URL)
-      var headers = {"Content-Type": "application/xml; charset=utf-8"}
+      var headers = {"Content-Type": "application/xml"}
       this.requests[0].respond(200, headers, "<name>John</name>")
       ;(yield res).body.must.equal("<name>John</name>")
-      })
+    })
 
-    it("must parse when Content-Type is application/vnd.foo+xml", function*() {
+    it("must set body by default when Content-Type is application/vnd.foo+xml",
+      function*() {
       var res = fetch(URL)
       var headers = {"Content-Type": "application/vnd.foo+xml"}
       this.requests[0].respond(200, headers, "<name>John</name>")
       ;(yield res).body.must.equal("<name>John</name>")
+    })
+
+    describe("given xml", function() {
+      var fetch = FetchParse(Fetch, {"xml": true})
+
+      it("must set body when Content-Type is application/xml", function*() {
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/xml"}
+        this.requests[0].respond(200, headers, "<name>John</name>")
+        ;(yield res).body.must.equal("<name>John</name>")
+      })
+
+      it("must parse given parser", function*() {
+        var fetch = FetchParse(Fetch, {
+          "xml": function(res) {
+            return res.text().then(function(obj) { return {name: "John"} })
+          }
+        })
+
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/xml"}
+        this.requests[0].respond(200, headers, "<name>John</name>")
+        ;(yield res).body.must.eql({name: "John"})
+      })
+
+      it("must parse when Content-Type is application/xml; charset=utf-8",
+        function*() {
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/xml; charset=utf-8"}
+        this.requests[0].respond(200, headers, "<name>John</name>")
+        ;(yield res).body.must.equal("<name>John</name>")
+      })
+
+      it("must parse when Content-Type is application/vnd.foo+xml",
+        function*() {
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/vnd.foo+xml"}
+        this.requests[0].respond(200, headers, "<name>John</name>")
+        ;(yield res).body.must.equal("<name>John</name>")
+      })
+    })
+
+    describe("given application/xml", function() {
+      it("must set body if Content-Type is application/xml", function*() {
+        var fetch = FetchParse(Fetch, {"application/xml": true})
+
+        var res = fetch(URL)
+        var headers = {"Content-Type": "application/xml"}
+        this.requests[0].respond(200, headers, "<name>John</name>")
+        ;(yield res).body.must.equal("<name>John</name>")
+      })
+    })
+  })
+
+  describe("when Content-Type is binary", function() {
+    it("must set body by default when Content-Type is application/octet-stream",
+      function*() {
+      var res = fetch(URL)
+      var headers = {"Content-Type": "application/octet-stream"}
+      this.requests[0].respond(200, headers, GIF.toString("binary"))
+      res = yield res
+      res.body.must.be.an.instanceof(ArrayBuffer)
+      new Buffer(res.body).equals(GIF).must.be.true()
+    })
+
+    describe("given application/*", function() {
+      it("must set body when Content-Type is application/octet-stream",
+        function*() {
+        var fetch = FetchParse(Fetch, {"application/*": true})
+        var res = fetch("/")
+        var headers = {"Content-Type": "application/octet-stream"}
+        this.requests[0].respond(200, headers, GIF.toString("binary"))
+        res = yield res
+        res.body.must.be.an.instanceof(ArrayBuffer)
+        new Buffer(res.body).equals(GIF).must.be.true()
+      })
     })
   })
 })
